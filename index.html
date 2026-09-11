@@ -467,12 +467,12 @@ const DEFAULT_AGRONOMIC_PARAMS = {
 };
 
 const DEFAULT_SETTINGS = {
-  propertyName: "Fazenda São Basílio",
+  propertyName: "",
   municipality: "Uberaba",
   state: "Minas Gerais",
   region: "Triângulo Mineiro / Cerrado",
-  latitude: -19.7483,
-  longitude: -47.9319,
+  latitude: null,
+  longitude: null,
   altitude: null,
   totalAreaHa: null,
   areaUnit: "ha",
@@ -1152,6 +1152,13 @@ async function signInWithPassword(email, password) {
   if (error) throw error;
   return data;
 }
+async function signUpWithPassword(email, password) {
+  const client = ensureClient();
+  if (!client) throw new Error("Supabase não configurado.");
+  const { data, error } = await client.auth.signUp({ email, password });
+  if (error) throw error;
+  return data;
+}
 async function signOut() {
   const client = ensureClient();
   if (client) await client.auth.signOut();
@@ -1437,7 +1444,7 @@ async function getWeather(force = false) {
 }
 
 function isFirstRun() { return !getSettings().onboardingComplete; }
-const S = { persist,store,getSettings,updateSettings,getParams,updateParams,getSeasons,createSeason,updateSeason,currentSeason,exportAll,importAll,wipeAll,plantingReferenceDate,calcDAP,currentDAP,phaseForDAP,theoreticalPopulation,plotPopulationSummary,totalAreaHa,rainSum,daysAgoStr,lastRecordOf,expenseTotal,budgetTotal,expensesByCategory,costPerHa,harvestTotals,costPerKg,salesTotals,nameOf,getWeather,isFirstRun,isSupabaseConfigured,signInWithPassword,signOut,getSession,onAuthStateChange,loadAllData,isDataLoaded };
+const S = { persist,store,getSettings,updateSettings,getParams,updateParams,getSeasons,createSeason,updateSeason,currentSeason,exportAll,importAll,wipeAll,plantingReferenceDate,calcDAP,currentDAP,phaseForDAP,theoreticalPopulation,plotPopulationSummary,totalAreaHa,rainSum,daysAgoStr,lastRecordOf,expenseTotal,budgetTotal,expensesByCategory,costPerHa,harvestTotals,costPerKg,salesTotals,nameOf,getWeather,isFirstRun,isSupabaseConfigured,signInWithPassword,signUpWithPassword,signOut,getSession,onAuthStateChange,loadAllData,isDataLoaded };
 
 function el(html) {
   const t = document.createElement("template");
@@ -1671,25 +1678,56 @@ function renderConfigMissing() {
     </div>`;
 }
 
-function renderLogin(onSuccess) {
+function renderLogin(onSuccess, startupError = "") {
   document.body.innerHTML = `
     <div class="onboard-wrap">
       <div class="onboard-card" style="text-align:center;">
         ${logoSVG(72)}
         <h1 style="margin-top:12px;">Raiz Mineira</h1>
-        <p class="sub" style="margin-bottom:20px;">Acesso restrito — Fazenda São Basílio</p>
+        <p class="sub" style="margin-bottom:18px;">Gestão agronômica da safra</p>
+        <div class="tabs" style="justify-content:center;margin-bottom:16px;">
+          <button type="button" class="active" id="tabLogin">Entrar</button>
+          <button type="button" id="tabSignup">Criar primeiro acesso</button>
+        </div>
+        <div id="startupError" class="alert alta" style="${startupError ? '' : 'display:none;'};text-align:left;margin-bottom:12px;">
+          <div class="ic">⚠️</div><div class="body"><strong>Não foi possível carregar os dados</strong><span>${startupError || ''}</span></div>
+        </div>
         <form id="loginForm" style="text-align:left;">
           <div class="field"><label>E-mail</label><input type="email" id="loginEmail" required autocomplete="username"/></div>
           <div class="field"><label>Senha</label><input type="password" id="loginPassword" required autocomplete="current-password"/></div>
           <div id="loginError" style="display:none;color:var(--red);font-size:12.5px;margin-bottom:10px;"></div>
           <button type="submit" class="btn primary block" id="loginBtn">Entrar</button>
         </form>
-        <p class="hint" style="margin-top:16px;">Não há cadastro público. Se você ainda não tem acesso, peça ao responsável pela fazenda para criar seu login.</p>
+        <form id="signupForm" style="display:none;text-align:left;">
+          <div class="tag-tip" style="text-align:left;margin-bottom:12px;">🌱 Use esta opção somente para criar o primeiro acesso. Depois, desative novos cadastros no Supabase.</div>
+          <div class="field"><label>E-mail</label><input type="email" id="signupEmail" required autocomplete="email"/></div>
+          <div class="field"><label>Senha</label><input type="password" id="signupPassword" required minlength="6" autocomplete="new-password"/></div>
+          <div class="field"><label>Repita a senha</label><input type="password" id="signupPassword2" required minlength="6" autocomplete="new-password"/></div>
+          <div id="signupError" style="display:none;color:var(--red);font-size:12.5px;margin-bottom:10px;"></div>
+          <div id="signupOk" style="display:none;color:var(--field);font-size:12.5px;margin-bottom:10px;"></div>
+          <button type="submit" class="btn primary block" id="signupBtn">Criar acesso</button>
+        </form>
+        <p class="hint" style="margin-top:16px;">Acesso protegido por e-mail e senha.</p>
       </div>
     </div>`;
-  const form = document.getElementById("loginForm");
+
+  const loginForm = document.getElementById("loginForm");
+  const signupForm = document.getElementById("signupForm");
+  const tabLogin = document.getElementById("tabLogin");
+  const tabSignup = document.getElementById("tabSignup");
   const errBox = document.getElementById("loginError");
-  form.addEventListener("submit", async (e) => {
+
+  function setMode(mode) {
+    const isLogin = mode === "login";
+    loginForm.style.display = isLogin ? "block" : "none";
+    signupForm.style.display = isLogin ? "none" : "block";
+    tabLogin.classList.toggle("active", isLogin);
+    tabSignup.classList.toggle("active", !isLogin);
+  }
+  tabLogin.onclick = () => setMode("login");
+  tabSignup.onclick = () => setMode("signup");
+
+  loginForm.addEventListener("submit", async (e) => {
     e.preventDefault();
     errBox.style.display = "none";
     const btn = document.getElementById("loginBtn");
@@ -1699,20 +1737,51 @@ function renderLogin(onSuccess) {
         document.getElementById("loginEmail").value.trim(),
         document.getElementById("loginPassword").value
       );
-      onSuccess();
+      await onSuccess();
     } catch (err) {
       errBox.textContent = translateAuthError(err);
       errBox.style.display = "block";
       btn.disabled = false; btn.textContent = "Entrar";
     }
   });
+
+  signupForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const err = document.getElementById("signupError");
+    const ok = document.getElementById("signupOk");
+    err.style.display = ok.style.display = "none";
+    const email = document.getElementById("signupEmail").value.trim();
+    const p1 = document.getElementById("signupPassword").value;
+    const p2 = document.getElementById("signupPassword2").value;
+    if (p1 !== p2) { err.textContent = "As senhas não coincidem."; err.style.display = "block"; return; }
+    const btn = document.getElementById("signupBtn");
+    btn.disabled = true; btn.textContent = "Criando…";
+    try {
+      const data = await S.signUpWithPassword(email, p1);
+      if (data && data.session) {
+        ok.textContent = "Acesso criado. Entrando no sistema…"; ok.style.display = "block";
+        await onSuccess();
+      } else {
+        ok.textContent = "Acesso criado. Se o projeto ainda exigir confirmação de e-mail, confirme o endereço e depois entre pela aba Entrar.";
+        ok.style.display = "block";
+        btn.disabled = false; btn.textContent = "Criar acesso";
+      }
+    } catch (e2) {
+      err.textContent = translateAuthError(e2);
+      err.style.display = "block";
+      btn.disabled = false; btn.textContent = "Criar acesso";
+    }
+  });
 }
 
 function translateAuthError(err) {
   const msg = (err && err.message) || "";
-  if (/invalid login credentials/i.test(msg)) return "E-mail ou senha incorretos.";
-  if (/email not confirmed/i.test(msg)) return "E-mail ainda não confirmado. Verifique sua caixa de entrada.";
-  return "Não foi possível entrar. " + (msg || "Verifique sua conexão e tente novamente.");
+  if (/invalid login credentials/i.test(msg)) return "E-mail ou senha incorretos, ou este usuário ainda não existe no Supabase. Se for o primeiro acesso, use ‘Criar primeiro acesso’.";
+  if (/email not confirmed/i.test(msg)) return "E-mail ainda não confirmado. Verifique sua caixa de entrada ou confirme se ‘Confirm email’ está desativado no Supabase.";
+  if (/signups not allowed/i.test(msg) || /signup.*disabled/i.test(msg)) return "Novos cadastros estão desativados no Supabase. Ative temporariamente ‘Allow new users to sign up’, crie o primeiro acesso e depois desative novamente.";
+  if (/user already registered/i.test(msg)) return "Este e-mail já está cadastrado. Use a aba Entrar ou redefina a senha pelo Supabase.";
+  if (/password/i.test(msg) && /6|characters|length/i.test(msg)) return "A senha precisa ter pelo menos 6 caracteres.";
+  return "Não foi possível concluir o acesso. " + (msg || "Verifique sua conexão e tente novamente.");
 }
 
 function renderLoading(message) {
@@ -3304,28 +3373,28 @@ async function boot() {
     renderConfigMissing();
     return;
   }
+
+  const loadAndEnter = async () => {
+    renderLoading("Carregando dados da lavoura…");
+    try {
+      await S.loadAllData();
+      enterApp();
+      return true;
+    } catch (e) {
+      console.error("Erro ao carregar dados após autenticação:", e);
+      const detail = (e && e.message) ? e.message : "Erro desconhecido ao acessar o banco de dados.";
+      renderLogin(loadAndEnter, "O login foi aceito, mas o banco não conseguiu carregar: " + detail);
+      return false;
+    }
+  };
+
   const session = await S.getSession();
   if (!session) {
-    renderLogin(async () => {
-      renderLoading("Carregando dados da fazenda…");
-      try {
-        await S.loadAllData();
-        enterApp();
-      } catch (e) {
-        console.error(e);
-        renderLogin(() => boot());
-      }
-    });
+    renderLogin(loadAndEnter);
     return;
   }
-  renderLoading("Carregando dados da fazenda…");
-  try {
-    await S.loadAllData();
-    enterApp();
-  } catch (e) {
-    console.error(e);
-    renderLogin(async () => { await boot(); });
-  }
+  await loadAndEnter();
+
   S.onAuthStateChange((event) => {
     if (event === "SIGNED_OUT") location.reload();
   });
