@@ -3117,6 +3117,7 @@ function S_today() { return new Date().toISOString().slice(0, 10); }
 const NAV_ITEMS = [
   { key: "painel", label: "Painel", icon: "🏠" },
   { key: "lavoura", label: "Lavoura", icon: "🗺️" },
+  { key: "culturas", label: "Culturas", icon: "🌱" },
   { key: "campo", label: "Campo", icon: "📋" },
   { key: "clima", label: "Clima", icon: "🌦️" },
   { key: "financeiro", label: "Financeiro", icon: "💰" },
@@ -3205,6 +3206,23 @@ function openQuickAdd() {
 }
 
 
+
+function renderRaizCulturas(container) {
+  const crops=["Mandioca","Milho","Soja","Feijão","Arroz","Trigo","Café","Cana-de-açúcar","Algodão","Tomate","Alface","Batata","Banana","Laranja","Uva","Amendoim","Sorgo","Manga"];
+  const selected=new Set();
+  container.innerHTML='<div class="view"><div class="view-header"><div class="eyebrow">Planejamento</div><h1>Minhas culturas</h1><p class="sub">Você pode plantar culturas diferentes na mesma propriedade. Selecione uma ou várias, sem precisar saber área ou espaçamento agora.</p></div><div class="card"><div id="raizCulturasGrid" style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px"></div><div class="field" style="margin-top:16px"><label>Outra cultura</label><input id="raizOutraCultura" placeholder="Escreva o nome se não estiver na lista"></div><button class="btn primary block" id="raizAddCrops">Adicionar culturas ao planejamento</button><p id="raizCropMsg" role="status" style="margin-top:10px;font-size:13px"></p></div><div class="card section"><strong>Como funciona?</strong><p>Para cada cultura escolhida, o RAIZ cria um planejamento inicial. Complete os dados no menu Lavoura conforme for aprendendo.</p></div></div>';
+  const grid=container.querySelector("#raizCulturasGrid");
+  crops.forEach(name=>{const label=document.createElement("label");label.style.cssText="display:flex;gap:7px;align-items:center;padding:9px;border:1px solid var(--line);border-radius:8px";const input=document.createElement("input");input.type="checkbox";input.style.width="auto";input.onchange=()=>{if(input.checked)selected.add(name);else selected.delete(name)};label.append(input,document.createTextNode(name));grid.append(label)});
+  container.querySelector("#raizAddCrops").onclick=()=>{
+    const custom=container.querySelector("#raizOutraCultura").value.trim().slice(0,65);if(custom)selected.add(custom);
+    if(!selected.size){container.querySelector("#raizCropMsg").textContent="Escolha pelo menos uma cultura.";return}
+    const existing=new Set((S.store.getAll("plots")||[]).map(p=>String(p.cultivar||"").toLowerCase()));
+    let added=0;
+    if(!S.currentSeason()) S.createSeason({name:"Meu planejamento agrícola",startDate:S_today(),purpose:"Culturas diversas"});
+    for(const crop of selected){if(existing.has(crop.toLowerCase()))continue;S.store.create("plots",{name:crop+" — área a definir",cultivar:crop,status:"Planejado",notes:"Complete os dados quando souber."});added++}
+    container.querySelector("#raizCropMsg").textContent=added+" cultura(s) adicionada(s). Abra Lavoura para ver e editar seus planejamentos.";
+  };
+}
 function renderRaizMesa(container) {
   container.innerHTML = `
     <div class="view">
@@ -3286,6 +3304,7 @@ function navigate(route, force) {
   switch (main) {
     case "painel": V.renderDashboard(root); break;
     case "lavoura": V.renderLavoura(root, sub); break;
+    case "culturas": renderRaizCulturas(root); break;
     case "campo": V.renderCampo(root, sub); break;
     case "clima": V.renderClima(root, sub); break;
     case "financeiro": V.renderFinanceiro(root, sub); break;
