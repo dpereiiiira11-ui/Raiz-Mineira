@@ -1692,6 +1692,8 @@ function renderLogin(onSuccess, startupError = "") {
           <div class="field"><label>Senha</label><input type="password" id="loginPassword" required autocomplete="current-password"/></div>
           <div id="loginError" style="display:none;color:var(--red);font-size:12.5px;margin-bottom:10px;"></div>
           <button type="submit" class="btn primary block" id="loginBtn">Entrar</button>
+          <button type="button" class="btn ghost block" id="forgotPasswordBtn" style="margin-top:9px">Esqueci minha senha</button>
+          <p id="resetFeedback" role="status" style="font-size:12px;margin-top:10px"></p>
         </form>
         <form id="signupForm" style="display:none;text-align:left;">
           <div class="tag-tip" style="text-align:left;margin-bottom:12px;">🌱 Use esta opção somente para criar o primeiro acesso. Depois, desative novos cadastros no Supabase.</div>
@@ -1722,6 +1724,25 @@ function renderLogin(onSuccess, startupError = "") {
   tabLogin.onclick = () => setMode("login");
   tabSignup.onclick = () => setMode("signup");
 
+  document.getElementById("forgotPasswordBtn").addEventListener("click", async () => {
+    const feedback=document.getElementById("resetFeedback");
+    const email=document.getElementById("loginEmail").value.trim();
+    if (!email || !document.getElementById("loginEmail").checkValidity()) {
+      feedback.textContent="Informe seu e-mail no campo acima para receber o link de recuperação.";
+      return;
+    }
+    const btn=document.getElementById("forgotPasswordBtn");
+    btn.disabled=true; feedback.textContent="Solicitando recuperação...";
+    try {
+      const client=window.supabase.createClient(window.SUPABASE_CONFIG.url, window.SUPABASE_CONFIG.anonKey);
+      const { error }=await client.auth.resetPasswordForEmail(email,{redirectTo:window.location.origin+"/reset.html"});
+      if(error)throw error;
+      feedback.textContent="Se este e-mail estiver cadastrado, você receberá um link para criar uma nova senha. Verifique também o spam.";
+    } catch(e) {
+      feedback.textContent="Não foi possível solicitar a recuperação. Verifique se o envio de e-mails e a URL de recuperação estão configurados no Supabase.";
+    } finally { btn.disabled=false; }
+  });
+  
   loginForm.addEventListener("submit", async (e) => {
     e.preventDefault();
     errBox.style.display = "none";
