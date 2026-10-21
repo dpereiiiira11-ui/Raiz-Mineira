@@ -3082,162 +3082,34 @@ const V = { renderDashboard,renderLavoura,renderCampo,renderClima,renderFinancei
 
 const STEPS = ["Propriedade", "Safra", "Talhão", "Plantio", "Irrigação", "Metas", "Orçamento"];
 
+
 function runOnboarding(onDone) {
-  const data = {
-    property: { ...S.getSettings() },
-    season: { name: "Safra 2026/2027", startDate: S_today(), purpose: "" },
-    plot: { name: "Talhão 01", areaHa: "", cultivar: "", rowSpacingM: "", plantSpacingM: "" },
-    planting: { plantingDate: "", cuttingsOrigin: "", cultivationSystem: "" },
-    irrigation: { system: "", note: "" },
-    goals: { targetYieldTHa: "", samplingFrequencyDays: 14 },
-    budgetLines: [],
-  };
-  let stepIdx = 0;
-
-  document.body.innerHTML = `<div class="onboard-wrap"><div class="onboard-card" id="onboardCard"></div></div>`;
-  const card = document.getElementById("onboardCard");
-
-  function renderStepBody(body) {
-    if (stepIdx === 0) {
-      body.innerHTML = `
-        <div class="field"><label>Nome da propriedade</label><input id="f_propertyName" value="${data.property.propertyName || ""}"/></div>
-        <div class="field"><label>Município/região</label><input id="f_municipality" value="${data.property.municipality || ""}"/></div>
-        <div class="field"><label>Estado</label><input id="f_state" value="${data.property.state || ""}"/></div>
-        <div class="field"><label>Região agrícola</label><input id="f_region" value="${data.property.region || ""}"/></div>
-        <div class="grid cols-2">
-          <div class="field"><label>Latitude</label><input id="f_lat" type="number" step="0.0001" value="${data.property.latitude ?? ""}"/></div>
-          <div class="field"><label>Longitude</label><input id="f_lon" type="number" step="0.0001" value="${data.property.longitude ?? ""}"/></div>
-        </div>
-        <div class="field"><label>Área total cultivada (ha)</label><input id="f_area" type="number" step="0.01" value="${data.property.totalAreaHa ?? ""}"/></div>
-        <p class="hint">Estes dados são apenas o ponto de partida — tudo pode ser ajustado depois em Configurações.</p>
-      `;
-    } else if (stepIdx === 1) {
-      body.innerHTML = `
-        <div class="field"><label>Nome da safra</label><input id="f_seasonName" value="${data.season.name}"/></div>
-        <div class="field"><label>Data de início</label><input id="f_seasonStart" type="date" value="${data.season.startDate}"/></div>
-        <div class="field"><label>Finalidade da produção</label><select id="f_purpose">${["", "Mandioca de mesa", "Indústria", "Fécula", "Farinha", "Alimentação animal", "Outra"].map(o => `<option ${o === data.season.purpose ? "selected" : ""}>${o}</option>`).join("")}</select></div>
-      `;
-    } else if (stepIdx === 2) {
-      body.innerHTML = `
-        <div class="field"><label>Nome do talhão</label><input id="f_plotName" value="${data.plot.name}"/></div>
-        <div class="field"><label>Área do talhão (ha)</label><input id="f_plotArea" type="number" step="0.01" value="${data.plot.areaHa}"/></div>
-        <div class="field"><label>Variedade/cultivar</label><input id="f_cultivar" value="${data.plot.cultivar}"/></div>
-        <div class="grid cols-2">
-          <div class="field"><label>Espaçamento entre linhas (m)</label><input id="f_rowSpacing" type="number" step="0.01" value="${data.plot.rowSpacingM}"/></div>
-          <div class="field"><label>Espaçamento entre plantas (m)</label><input id="f_plantSpacing" type="number" step="0.01" value="${data.plot.plantSpacingM}"/></div>
-        </div>
-        <p class="hint">Você poderá cadastrar mais talhões depois, em Lavoura.</p>
-      `;
-    } else if (stepIdx === 3) {
-      body.innerHTML = `
-        <div class="field"><label>Data de plantio</label><input id="f_plantingDate" type="date" value="${data.planting.plantingDate}"/></div>
-        <div class="field"><label>Origem das manivas</label><input id="f_cuttingsOrigin" value="${data.planting.cuttingsOrigin}"/></div>
-        <div class="field"><label>Sistema de cultivo</label><input id="f_cultivationSystem" placeholder="ex.: sequeiro, irrigado" value="${data.planting.cultivationSystem}"/></div>
-      `;
-    } else if (stepIdx === 4) {
-      body.innerHTML = `
-        <div class="field"><label>Sistema de irrigação</label><select id="f_irrigSystem">${["", "Nenhum / sequeiro", "Gotejamento", "Aspersão", "Microaspersão", "Pivô", "Sulco", "Outro"].map(o => `<option ${o === data.irrigation.system ? "selected" : ""}>${o}</option>`).join("")}</select></div>
-        <div class="field"><label>Observações</label><textarea id="f_irrigNote">${data.irrigation.note}</textarea></div>
-      `;
-    } else if (stepIdx === 5) {
-      body.innerHTML = `
-        <div class="field"><label>Meta de produtividade (t/ha) — opcional</label><input id="f_targetYield" type="number" step="0.1" value="${data.goals.targetYieldTHa}"/></div>
-        <div class="field"><label>Frequência de amostragem/avaliação (dias)</label><input id="f_samplingFreq" type="number" value="${data.goals.samplingFrequencyDays}"/></div>
-        <p class="hint">Sem meta cadastrada, o sistema não fará comparações de desvio até você definir um valor.</p>
-      `;
-    } else if (stepIdx === 6) {
-      body.innerHTML = `
-        <p class="hint" style="margin-bottom:10px;">Adicione linhas de orçamento iniciais (opcional — pode pular e cadastrar depois em Financeiro).</p>
-        <div id="budgetRows">${data.budgetLines.map((b, i) => `<div class="kv"><span class="k">${b.category}</span><span class="v">R$ ${b.plannedValue}</span></div>`).join("")}</div>
-        <div class="grid cols-2" style="margin-top:8px;">
-          <select id="f_budgetCat">${["Arrendamento", "Preparo do solo", "Manivas", "Fertilizantes", "Defensivos", "Irrigação", "Mão de obra", "Colheita", "Outros"].map(o => `<option>${o}</option>`).join("")}</select>
-          <input id="f_budgetVal" type="number" placeholder="Valor (R$)"/>
-        </div>
-        <button class="btn ghost block" id="addBudgetRow" style="margin-top:8px;">+ Adicionar linha</button>
-      `;
-      body.querySelector("#addBudgetRow").onclick = () => {
-        const cat = body.querySelector("#f_budgetCat").value;
-        const val = Number(body.querySelector("#f_budgetVal").value) || 0;
-        if (val > 0) { data.budgetLines.push({ category: cat, plannedValue: val }); renderStepBody(body); }
-      };
+  const crops = ["Mandioca","Milho","Soja","Feijão","Arroz","Trigo","Café","Cana-de-açúcar","Algodão","Tomate","Alface","Batata","Banana","Laranja","Uva","Amendoim","Sorgo","Manga"];
+  const selected = new Set();
+  document.body.innerHTML = '<div class="onboard-wrap"><div class="onboard-card" id="easyOnboard"></div></div>';
+  const card = document.getElementById("easyOnboard");
+  function finish(withCrops) {
+    S.updateSettings({ onboardingComplete:true });
+    if (withCrops && selected.size) {
+      if (!S.currentSeason()) S.createSeason({name:"Meu primeiro planejamento",startDate:S_today(),purpose:"Culturas diversas"});
+      for (const crop of selected) S.store.create("plots",{name:crop+" — área a definir",cultivar:crop,status:"Planejado",notes:"Planejamento inicial. Complete área e demais informações quando souber."});
     }
+    onDone();
   }
-
-  function collectStep() {
-    if (stepIdx === 0) {
-      data.property.propertyName = card.querySelector("#f_propertyName").value;
-      data.property.municipality = card.querySelector("#f_municipality").value;
-      data.property.state = card.querySelector("#f_state").value;
-      data.property.region = card.querySelector("#f_region").value;
-      data.property.latitude = Number(card.querySelector("#f_lat").value) || null;
-      data.property.longitude = Number(card.querySelector("#f_lon").value) || null;
-      data.property.totalAreaHa = Number(card.querySelector("#f_area").value) || null;
-    } else if (stepIdx === 1) {
-      data.season.name = card.querySelector("#f_seasonName").value;
-      data.season.startDate = card.querySelector("#f_seasonStart").value;
-      data.season.purpose = card.querySelector("#f_purpose").value;
-    } else if (stepIdx === 2) {
-      data.plot.name = card.querySelector("#f_plotName").value;
-      data.plot.areaHa = Number(card.querySelector("#f_plotArea").value) || null;
-      data.plot.cultivar = card.querySelector("#f_cultivar").value;
-      data.plot.rowSpacingM = Number(card.querySelector("#f_rowSpacing").value) || null;
-      data.plot.plantSpacingM = Number(card.querySelector("#f_plantSpacing").value) || null;
-    } else if (stepIdx === 3) {
-      data.planting.plantingDate = card.querySelector("#f_plantingDate").value;
-      data.planting.cuttingsOrigin = card.querySelector("#f_cuttingsOrigin").value;
-      data.planting.cultivationSystem = card.querySelector("#f_cultivationSystem").value;
-    } else if (stepIdx === 4) {
-      data.irrigation.system = card.querySelector("#f_irrigSystem").value;
-      data.irrigation.note = card.querySelector("#f_irrigNote").value;
-    } else if (stepIdx === 5) {
-      data.goals.targetYieldTHa = Number(card.querySelector("#f_targetYield").value) || null;
-      data.goals.samplingFrequencyDays = Number(card.querySelector("#f_samplingFreq").value) || 14;
-    }
-  }
-
-  function finish() {
-    collectStep();
-    S.updateSettings({ ...data.property, onboardingComplete: true });
-    S.createSeason({ name: data.season.name, startDate: data.season.startDate, purpose: data.season.purpose, plantingDate: data.planting.plantingDate });
-    S.store.create("plots", {
-      name: data.plot.name, areaHa: data.plot.areaHa, cultivar: data.plot.cultivar,
-      rowSpacingM: data.plot.rowSpacingM, plantSpacingM: data.plot.plantSpacingM,
-      plantingDate: data.planting.plantingDate, status: data.planting.plantingDate ? "Plantado" : "Planejado",
-      notes: [data.planting.cuttingsOrigin && `Origem das manivas: ${data.planting.cuttingsOrigin}`, data.planting.cultivationSystem && `Sistema de cultivo: ${data.planting.cultivationSystem}`].filter(Boolean).join(" · "),
+  function selectCrops(){
+    card.innerHTML = '<h1>O que você quer plantar?</h1><p class="sub">Escolha uma ou várias culturas. Você pode decidir tudo depois.</p><div id="cropChoices" style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:15px 0"></div><div class="field"><label>Outra cultura (opcional)</label><input id="otherCrop" placeholder="Ex.: abóbora"></div><button class="btn primary block" id="saveCrops">Começar</button><button class="btn ghost block" id="skipCrops" style="margin-top:10px">Pular por enquanto</button>';
+    const choices=card.querySelector("#cropChoices");
+    crops.forEach(crop=>{
+      const label=document.createElement("label");label.style.cssText="display:flex;gap:8px;align-items:center;border:1px solid var(--line);border-radius:10px;padding:10px;background:var(--surface)";
+      const cb=document.createElement("input");cb.type="checkbox";cb.style.width="auto";cb.onchange=()=>{if(cb.checked)selected.add(crop);else selected.delete(crop)};
+      label.append(cb,document.createTextNode(crop));choices.append(label);
     });
-    S.updateParams({ targetYieldTHa: data.goals.targetYieldTHa, samplingFrequencyDays: data.goals.samplingFrequencyDays, irrigationStrategyNote: data.irrigation.note });
-    data.budgetLines.forEach(b => S.store.create("budgetLines", b));
-    card.innerHTML = `<div style="text-align:center;padding:30px 10px;">
-      <div style="font-size:40px;">🌱</div>
-      <h1 style="margin-top:12px;">Lavoura configurada. Vamos acompanhar a safra.</h1>
-      <button class="btn primary block" id="goDash" style="margin-top:20px;">Entrar no sistema</button>
-    </div>`;
-    card.querySelector("#goDash").onclick = onDone;
+    card.querySelector("#saveCrops").onclick=()=>{const other=card.querySelector("#otherCrop").value.trim().slice(0,65);if(other)selected.add(other);finish(true)};
+    card.querySelector("#skipCrops").onclick=()=>finish(false);
   }
-
-  function render() {
-    card.innerHTML = `
-      <div style="text-align:center;margin-bottom:10px;">${logoSVG(44, { withBg: false })}</div>
-      <div class="stepper">${STEPS.map((_, i) => `<div class="dot ${i <= stepIdx ? "done" : ""}"></div>`).join("")}</div>
-      <div class="eyebrow" style="color:var(--field);font-size:12px;font-weight:600;">ETAPA ${stepIdx + 1} DE ${STEPS.length}</div>
-      <h1 style="margin-bottom:16px;">${STEPS[stepIdx]}</h1>
-      <div id="stepBody"></div>
-      <div class="modal-actions">
-        ${stepIdx > 0 ? `<button class="btn ghost" id="prevBtn">Voltar</button>` : `<div></div>`}
-        <button class="btn primary block" id="nextBtn">${stepIdx === STEPS.length - 1 ? "🌱 Finalizar" : "Continuar"}</button>
-      </div>
-    `;
-    renderStepBody(card.querySelector("#stepBody"));
-    const nextBtn = card.querySelector("#nextBtn");
-    const prevBtn = card.querySelector("#prevBtn");
-    nextBtn.onclick = () => {
-      collectStep();
-      if (stepIdx === STEPS.length - 1) { finish(); return; }
-      stepIdx++; render();
-    };
-    if (prevBtn) prevBtn.onclick = () => { collectStep(); stepIdx--; render(); };
-  }
-  render();
+  card.innerHTML = '<div style="text-align:center">🌱</div><h1 style="text-align:center">Bem-vindo ao RAIZ</h1><p class="sub" style="text-align:center">Você não precisa entender de agricultura para começar. Nós acompanharemos você passo a passo.</p><div class="card" style="margin:18px 0;background:var(--field-pale)"><strong>Sem burocracia</strong><p>Latitude, longitude, altitude, talhões, espaçamento e tamanho da área podem ser informados depois.</p></div><button class="btn primary block" id="chooseCrops">Escolher o que quero plantar</button><button class="btn ghost block" id="enterNow" style="margin-top:10px">Entrar agora e decidir depois</button>';
+  card.querySelector("#chooseCrops").onclick=selectCrops;
+  card.querySelector("#enterNow").onclick=()=>finish(false);
 }
 
 function S_today() { return new Date().toISOString().slice(0, 10); }
