@@ -10,13 +10,7 @@
   "theme_color": "#183728",
   "icons": [
     {
-      "src": "/icon-raiz-light.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "/icon-raiz-dark.svg",
+      "src": "/logo-raiz.svg",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any"
