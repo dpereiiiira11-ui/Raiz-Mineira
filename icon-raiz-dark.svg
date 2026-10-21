@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-label="RAIZ Gestão Agrícola">
+<rect width="512" height="512" rx="112" fill="#183728"/>
+<rect x="24" y="24" width="464" height="464" rx="94" fill="none" stroke="#7FA577" stroke-width="7"/>
+<path d="M126 352V112h128c91 0 138 46 138 115 0 48-27 83-72 99l70 26H296l-65-48h-22v48h-83Zm83-167v65h45c34 0 51-13 51-33 0-22-17-32-51-32h-45Z" fill="#FFFDF4"/>
+<path d="M153 368c64-29 121-32 205-9M170 385c72-16 119-14 168 2M195 403c51-2 96 3 122 15" stroke="#B77550" stroke-width="11" fill="none" stroke-linecap="round"/>
+<path d="M278 122c10-33 33-51 82-55-13 37-38 58-81 61" fill="#83AC79"/>
+<text x="256" y="463" font-family="Arial,Helvetica,sans-serif" font-size="35" font-weight="700" letter-spacing="0.6" text-anchor="middle" fill="#FFFDF4">Gestão Agrícola</text>
+</svg>
