@@ -284,6 +284,12 @@ table.simple td{ padding:8px; border-bottom:1px solid var(--line); }
 .slider-row input[type=range]{ flex:1; }
 .slider-row .val{ min-width:64px; text-align:right; font-weight:600; font-family:var(--font-display); }
 
+
+/* Navegação RAIZ responsiva */
+.sidenav{overflow-y:auto;scrollbar-width:thin}.sidenav a{min-height:42px}.sidenav .nav-label{min-width:0}.sidenav .brand{min-height:55px}.bottomnav button .ic{display:flex;align-items:center;justify-content:center}.bottomnav button{min-width:0}.topbar .dap-pill{max-width:45vw;overflow:hidden;text-overflow:ellipsis}
+#sidebarBackdrop{display:none}
+@media(min-width:900px){body.nav-collapsed .sidenav{width:78px}body.nav-collapsed .sidenav .nav-label{display:none}body.nav-collapsed .sidenav a,body.nav-collapsed .sidenav .navbtn{justify-content:center;font-size:0}body.nav-collapsed .app-shell{padding-left:78px}body.nav-collapsed .topbar{margin-left:78px}}
+@media(max-width:899px){#mobileMenuToggle{display:block!important;flex-shrink:0}.sidenav{display:flex;position:fixed;z-index:90;top:0;bottom:0;left:0;width:min(82vw,300px);background:var(--forest-deep);padding:20px 12px;flex-direction:column;transform:translateX(-110%);transition:transform .2s ease}.mobile-nav-open .sidenav{transform:translateX(0)}.mobile-nav-open #sidebarBackdrop{display:block;position:fixed;inset:0;background:#0008;border:0;z-index:85}.topbar{gap:8px;padding:10px}.topbar .dap-pill{font-size:10px;padding:5px 8px;max-width:33vw}.topbar .farm-name{font-size:15px}.bottomnav{overflow-x:auto;justify-content:flex-start}.bottomnav button{flex:1 0 20%;font-size:10px}.fab{bottom:90px}}
 </style>
 </head>
 <body>
@@ -3244,18 +3250,20 @@ function runOnboarding(onDone) {
 
 function S_today() { return new Date().toISOString().slice(0, 10); }
 
+function navIcon(key,size=20){const paths={"painel":"<rect x=\"3\" y=\"3\" width=\"7\" height=\"9\" rx=\"1\"/><rect x=\"14\" y=\"3\" width=\"7\" height=\"5\" rx=\"1\"/><rect x=\"14\" y=\"12\" width=\"7\" height=\"9\" rx=\"1\"/><rect x=\"3\" y=\"16\" width=\"7\" height=\"5\" rx=\"1\"/>","lavoura":"<path d=\"m3 6 6-3 6 3 6-3v15l-6 3-6-3-6 3z\"/><path d=\"M9 3v15M15 6v15\"/>","culturas":"<path d=\"M12 22v-8M12 14C5 14 3 9 3 4c6 0 9 4 9 10ZM12 14c0-6 3-10 9-10 0 5-2 10-9 10Z\"/>","campo":"<rect x=\"5\" y=\"4\" width=\"14\" height=\"17\" rx=\"2\"/><rect x=\"9\" y=\"2\" width=\"6\" height=\"4\" rx=\"1\"/><path d=\"M9 12h6M9 16h6\"/>","clima":"<circle cx=\"8\" cy=\"8\" r=\"3\"/><path d=\"M8 1v2M1 8h2M3 3l1.5 1.5M16 12h.01M7 19h12a4 4 0 0 0 0-8 6 6 0 0 0-11-1 4.5 4.5 0 0 0-1 9Z\"/>","financeiro":"<rect x=\"2\" y=\"5\" width=\"20\" height=\"16\" rx=\"2\"/><path d=\"M2 9h20M17 15h2\"/>","vendas":"<path d=\"M3 17h5l3 2 8-5a2 2 0 0 0-2-3l-6 3\"/><path d=\"M3 11h5l4 3h4\"/><circle cx=\"17\" cy=\"5\" r=\"3\"/>","mercado":"<path d=\"M3 10 5 3h14l2 7v11H3V10ZM3 10h18M8 21v-8h8v8\"/>","relatorios":"<path d=\"M4 20V12M10 20V5M16 20V9M22 20V3\"/>","assistente":"<path d=\"M12 7c-3-2-6-2-9-1v14c3-1 6-1 9 1 3-2 6-2 9-1V6c-3-1-6-1-9 1ZM12 7v14\"/><path d=\"m15 12 2 2 3-4\"/>","configuracoes":"<circle cx=\"12\" cy=\"12\" r=\"3\"/><path d=\"M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2\"/>"};return '<svg width="'+size+'" height="'+size+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink:0">'+(paths[key]||paths.painel)+'</svg>';}
+
 const NAV_ITEMS = [
-  { key: "painel", label: "Painel", icon: "🏠" },
-  { key: "lavoura", label: "Lavoura", icon: "🗺️" },
-  { key: "culturas", label: "Culturas", icon: "🌱" },
-  { key: "campo", label: "Campo", icon: "📋" },
-  { key: "clima", label: "Clima", icon: "🌦️" },
-  { key: "financeiro", label: "Financeiro", icon: "💰" },
-  { key: "vendas", label: "Vendas", icon: "💵" },
-  { key: "mercado", label: "Da Raiz à Mesa", icon: "🧺" },
-  { key: "relatorios", label: "Relatórios", icon: "📊" },
-  { key: "assistente", label: "Assistente", icon: "🧭" },
-  { key: "configuracoes", label: "Config.", icon: "⚙️" },
+  { key: "painel", label: "Painel", icon: "layout-dashboard" },
+  { key: "lavoura", label: "Lavoura", icon: "map" },
+  { key: "culturas", label: "Culturas", icon: "sprout" },
+  { key: "campo", label: "Campo", icon: "clipboard-list" },
+  { key: "clima", label: "Clima", icon: "cloud-sun" },
+  { key: "financeiro", label: "Financeiro", icon: "wallet" },
+  { key: "vendas", label: "Vendas", icon: "hand-coins" },
+  { key: "mercado", label: "Da Raiz à Mesa", icon: "store" },
+  { key: "relatorios", label: "Relatórios", icon: "chart-no-axes-column" },
+  { key: "assistente", label: "Assistente", icon: "book-open-check" },
+  { key: "configuracoes", label: "Config.", icon: "settings" },
 ];
 const BOTTOM_KEYS = ["painel", "campo", "clima", "financeiro", "assistente"];
 
@@ -3285,15 +3293,17 @@ function whiteGateIcon(size = 24) {
 
 function renderShell() {
   document.body.innerHTML = `
-    <nav class="sidenav">
+    <nav class="sidenav" id="raizSidebar" aria-label="Menu principal">
       <div class="brand" style="display:flex;align-items:center;gap:10px;">
         ${logoSVG(34, { withBg: false })}
-        <div>RAIZ<small>Gestão Agrícola</small></div>
+        <div class="nav-label">RAIZ<small>Gestão Agrícola</small></div>
       </div>
-      ${NAV_ITEMS.map(i => `<a data-nav="${i.key}">${i.icon} ${i.label}</a>`).join("")}
+      <button class="navbtn" id="sidebarCollapse" type="button" aria-label="Recolher ou expandir menu" title="Recolher ou expandir menu" style="justify-content:center">☰ <span class="nav-label">Recolher menu</span></button>
+      ${NAV_ITEMS.map(i => `<a data-nav="${i.key}">${navIcon(i.key)} <span class="nav-label">${i.label}</span></a>`).join("")}
       <button class="navbtn" id="logoutBtnSide" style="margin-top:auto;color:#CBD8C0;">${whiteGateIcon(22)} Sair</button>
     </nav>
     <div class="topbar">
+      <button class="icon-btn" id="mobileMenuToggle" aria-label="Abrir menu" aria-expanded="false" style="display:none">☰</button>
       <div style="display:flex;align-items:center;gap:10px;">
         ${logoSVG(28, { withBg: false })}
         <div>
@@ -3306,16 +3316,21 @@ function renderShell() {
         <button class="icon-btn" id="logoutBtnTop" title="Sair do RAIZ">${whiteGateIcon(25)}</button>
       </div>
     </div>
-    <div class="app-shell"><div id="viewRoot"></div></div>
+    <button id="sidebarBackdrop" aria-label="Fechar menu" type="button"></button><div class="app-shell"><div id="viewRoot"></div></div>
     <button class="fab" id="fabRegistrar">📝 Registrar</button>
     <nav class="bottomnav" id="bottomNav">
       ${BOTTOM_KEYS.map(k => {
         const item = NAV_ITEMS.find(i => i.key === k);
-        return `<button data-nav="${k}"><span class="ic">${item.icon}</span>${item.label}</button>`;
+        return `<button data-nav="${k}"><span class="ic">${navIcon(item.key,21)}</span>${item.label}</button>`;
       }).join("")}
     </nav>
   `;
   document.querySelectorAll("[data-nav]").forEach(n => n.addEventListener("click", () => navigate(n.dataset.nav)));
+  const toggle=document.getElementById("mobileMenuToggle"),collapse=document.getElementById("sidebarCollapse"),backdrop=document.getElementById("sidebarBackdrop");
+  toggle.onclick=()=>{const open=!document.body.classList.contains("mobile-nav-open");document.body.classList.toggle("mobile-nav-open",open);toggle.setAttribute("aria-expanded",String(open));};
+  backdrop.onclick=()=>{document.body.classList.remove("mobile-nav-open");toggle.setAttribute("aria-expanded","false");};
+  collapse.onclick=()=>{const collapsed=document.body.classList.toggle("nav-collapsed");collapse.setAttribute("aria-expanded",String(!collapsed));};
+  document.querySelectorAll("#raizSidebar [data-nav]").forEach(x=>x.addEventListener("click",()=>{document.body.classList.remove("mobile-nav-open");toggle.setAttribute("aria-expanded","false");}));
   document.getElementById("fabRegistrar").addEventListener("click", openQuickAdd);
   document.getElementById("logoutBtnTop").addEventListener("click", doLogout);
   document.getElementById("logoutBtnSide").addEventListener("click", doLogout);
