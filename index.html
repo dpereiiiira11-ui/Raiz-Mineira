@@ -3216,7 +3216,7 @@ function renderRaizCulturas(container) {
   container.querySelector("#raizAddCrops").onclick=()=>{
     const custom=container.querySelector("#raizOutraCultura").value.trim().slice(0,65);if(custom)selected.add(custom);
     if(!selected.size){container.querySelector("#raizCropMsg").textContent="Escolha pelo menos uma cultura.";return}
-    const existing=new Set((S.store.getAll("plots")||[]).map(p=>String(p.cultivar||"").toLowerCase()));
+    const existing=new Set((S.store.all("plots")||[]).map(p=>String(p.cultivar||"").toLowerCase()));
     let added=0;
     if(!S.currentSeason()) S.createSeason({name:"Meu planejamento agrícola",startDate:S_today(),purpose:"Culturas diversas"});
     for(const crop of selected){if(existing.has(crop.toLowerCase()))continue;S.store.create("plots",{name:crop+" — área a definir",cultivar:crop,status:"Planejado",notes:"Complete os dados quando souber."});added++}
