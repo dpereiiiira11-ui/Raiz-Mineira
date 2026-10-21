@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
-<title>Raiz Mineira — Gestão da lavoura de mandioca</title>
-<meta name="description" content="Caderno de campo digital, gestão agronômica e financeira para a lavoura de mandioca."/>
+<title>RAIZ — Gestão Agrícola</title>
+<meta name="description" content="RAIZ — gestão agrícola, finanças, lavoura e comercialização da produção."/>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -3254,6 +3254,7 @@ const NAV_ITEMS = [
   { key: "clima", label: "Clima", icon: "🌦️" },
   { key: "financeiro", label: "Financeiro", icon: "💰" },
   { key: "vendas", label: "Vendas", icon: "💵" },
+  { key: "mercado", label: "Da Raiz à Mesa", icon: "🧺" },
   { key: "relatorios", label: "Relatórios", icon: "📊" },
   { key: "assistente", label: "Assistente", icon: "🧭" },
   { key: "configuracoes", label: "Config.", icon: "⚙️" },
@@ -3282,7 +3283,7 @@ function renderShell() {
     <nav class="sidenav">
       <div class="brand" style="display:flex;align-items:center;gap:10px;">
         ${logoSVG(34, { withBg: false })}
-        <div>Raiz Mineira<small>Gestão da lavoura de mandioca</small></div>
+        <div>RAIZ<small>Gestão Agrícola</small></div>
       </div>
       ${NAV_ITEMS.map(i => `<a data-nav="${i.key}">${i.icon} ${i.label}</a>`).join("")}
       <button class="navbtn" id="logoutBtnSide" style="margin-top:auto;color:#CBD8C0;">🚪 Sair</button>
@@ -3291,7 +3292,7 @@ function renderShell() {
       <div style="display:flex;align-items:center;gap:10px;">
         ${logoSVG(28, { withBg: false })}
         <div>
-          <div class="farm-name">${S.getSettings().propertyName || "Raiz Mineira"}</div>
+          <div class="farm-name">${S.getSettings().propertyName || "RAIZ"}</div>
           <div class="season-name">${S.currentSeason()?.name || "Nenhuma safra ativa"}</div>
         </div>
       </div>
@@ -3336,6 +3337,77 @@ function openQuickAdd() {
   });
 }
 
+
+function renderRaizMesa(container) {
+  container.innerHTML = \`
+    <div class="view">
+      <div class="view-header">
+        <div class="eyebrow">Comercialização agrícola</div>
+        <h1>Da Raiz à Mesa</h1>
+        <p class="sub">Compare preços para venda direta ao consumidor e venda a comerciantes. Valores são estimativas para apoiar decisões, não cotações do mercado.</p>
+      </div>
+      <div class="card">
+        <h2>Calcule seu preço de venda</h2>
+        <p style="font-size:13px;color:var(--ink-soft)">Preencha os custos por unidade comercializada (kg, caixa ou tonelada). Inclua impostos e taxas aplicáveis no campo de custos adicionais.</p>
+        <div class="grid cols-2" style="margin-top:12px">
+          <div class="field"><label for="rm-unit">Unidade</label><select id="rm-unit"><option>kg</option><option>caixa</option><option>tonelada</option><option>saca</option><option>unidade</option></select></div>
+          <div class="field"><label for="rm-cost">Custo de produção por unidade (R$)</label><input id="rm-cost" type="number" min="0" step="0.01" value="3"></div>
+          <div class="field"><label for="rm-pack">Embalagem por unidade (R$)</label><input id="rm-pack" type="number" min="0" step="0.01" value="0.3"></div>
+          <div class="field"><label for="rm-freight">Frete por unidade (R$)</label><input id="rm-freight" type="number" min="0" step="0.01" value="0.2"></div>
+          <div class="field"><label for="rm-other">Outros custos / tributos (R$)</label><input id="rm-other" type="number" min="0" step="0.01" value="0"></div>
+          <div class="field"><label for="rm-loss">Perdas previstas (%)</label><input id="rm-loss" type="number" min="0" max="99" step="0.5" value="5"></div>
+          <div class="field"><label for="rm-direct">Margem desejada — direta (%)</label><input id="rm-direct" type="number" min="0" max="95" step="1" value="35"></div>
+          <div class="field"><label for="rm-wholesale">Margem desejada — comerciante (%)</label><input id="rm-wholesale" type="number" min="0" max="95" step="1" value="20"></div>
+        </div>
+        <div id="rm-error" role="status" style="color:var(--red);font-size:13px"></div>
+        <div class="grid cols-2" style="margin-top:10px">
+          <div class="card" style="background:var(--field-pale)"><div style="font-size:12px">Venda direta</div><div id="rm-direct-price" style="font-size:25px;font-weight:700">—</div><div id="rm-direct-margin" style="font-size:12px"></div></div>
+          <div class="card" style="background:var(--gold-pale)"><div style="font-size:12px">Venda para revenda</div><div id="rm-wholesale-price" style="font-size:25px;font-weight:700">—</div><div id="rm-wholesale-margin" style="font-size:12px"></div></div>
+        </div>
+        <p id="rm-summary" style="font-size:13px;margin-top:12px"></p>
+        <button id="rm-export" class="btn ghost" type="button">⬇ Exportar simulação CSV</button>
+      </div>
+      <div class="card section">
+        <h2>Para qual canal vender?</h2>
+        <p style="font-size:13px">A venda direta pode render mais por unidade, mas exige tempo para atender, entregar e divulgar. Vendas a comerciantes, CEASA, mercados e restaurantes podem movimentar maior volume, com outras condições e custos.</p>
+        <p style="font-size:13px"><strong>Antes de negociar:</strong> confirme padrão de qualidade, disponibilidade, embalagem, documentação fiscal, prazo de pagamento e frete. Pesquise cotações atualizadas na sua região.</p>
+      </div>
+    </div>\`;
+  const $ = id => container.querySelector("#" + id);
+  const keys = ["cost", "pack", "freight", "other", "loss", "direct", "wholesale"];
+  let output = null;
+  const fmt = n => n.toLocaleString("pt-BR", {style:"currency",currency:"BRL"});
+  function recalc() {
+    const n = Object.fromEntries(keys.map(k => [k, Number($("rm-" + k).value)]));
+    if (keys.some(k => !Number.isFinite(n[k]) || n[k] < 0) || n.loss >= 100 || n.direct >= 100 || n.wholesale >= 100) {
+      $("rm-error").textContent = "Revise os números: custos não podem ser negativos; perdas e margens devem ser menores que 100%.";
+      output = null;
+      for(const k of ["direct-price","wholesale-price"]) $("rm-"+k).textContent = "—";
+      $("rm-summary").textContent = "";
+      return;
+    }
+    $("rm-error").textContent = "";
+    const cost = (n.cost+n.pack+n.freight+n.other)/(1-n.loss/100);
+    const direct = cost/(1-n.direct/100);
+    const wholesale = cost/(1-n.wholesale/100);
+    const unit = $("rm-unit").value;
+    $("rm-direct-price").textContent = fmt(direct)+"/"+unit;
+    $("rm-wholesale-price").textContent = fmt(wholesale)+"/"+unit;
+    $("rm-direct-margin").textContent = "Resultado estimado: "+fmt(direct-cost)+" por "+unit;
+    $("rm-wholesale-margin").textContent = "Resultado estimado: "+fmt(wholesale-cost)+" por "+unit;
+    $("rm-summary").textContent = "Custo estimado ajustado pelas perdas: "+fmt(cost)+"/"+unit+". Margens calculadas sobre o preço de venda, não como acréscimo sobre custo.";
+    output = { unit,cost,direct,wholesale };
+  }
+  container.querySelectorAll("input,select").forEach(el => el.addEventListener("input",recalc));
+  $("rm-export").addEventListener("click", () => {
+    if(!output) return;
+    const csv = "Tipo;Preço por "+output.unit+"\\nCusto;"+output.cost.toFixed(2)+"\\nDireta;"+output.direct.toFixed(2)+"\\nPara revenda;"+output.wholesale.toFixed(2);
+    const url = URL.createObjectURL(new Blob(["\\uFEFF"+csv],{type:"text/csv;charset=utf-8"}));
+    const a = document.createElement("a"); a.href=url; a.download="raiz-precos.csv"; a.click(); URL.revokeObjectURL(url);
+  });
+  recalc();
+}
+
 function navigate(route, force) {
   currentRoute = route;
   if (!force) window.scrollTo(0, 0);
@@ -3351,6 +3423,7 @@ function navigate(route, force) {
     case "clima": V.renderClima(root, sub); break;
     case "financeiro": V.renderFinanceiro(root, sub); break;
     case "vendas": V.renderVendas(root, sub); break;
+    case "mercado": renderRaizMesa(root); break;
     case "relatorios": V.renderRelatorios(root); break;
     case "assistente": V.renderAssistente(root, sub); break;
     case "configuracoes": V.renderConfiguracoes(root); break;
