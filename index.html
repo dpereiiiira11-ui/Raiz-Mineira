@@ -2388,9 +2388,23 @@ function renderIrrigationTab(body) {
       <div class="card stat"><span class="label">No mês</span><span class="value small">${mo}</span></div>
       <div class="card stat"><span class="label">Volume (7d)</span><span class="value small">${fmtNum(volSince7, 0)} L</span></div>
     </div>
-    <button class="btn primary block" id="addI" style="margin-bottom:14px;">+ Nova irrigação</button>
+    <div class="card" style="margin-bottom:12px;background:var(--field-pale)">
+      <strong>💧 Assistente de irrigação</strong>
+      <p style="font-size:13px;margin:6px 0">Não existe uma frequência de rega igual para todas as lavouras. A necessidade depende da cultura, fase, solo, chuvas recentes e previsão. Em Clima → Previsão, veja a temperatura e chuva quando houver coordenadas cadastradas.</p>
+      <p style="font-size:12px">Para começar: observe a umidade do solo na profundidade das raízes, registre chuvas e consulte assistência técnica para definir a lâmina necessária. Uma rega programada não significa que ela ocorreu.</p>
+    </div>
+    <button class="btn primary block" id="addI" style="margin-bottom:8px;">+ Registrar irrigação</button>
+    ${last ? '<button class="btn ghost block" id="repeatI" style="margin-bottom:14px;">💧 Registrar novamente usando a última irrigação</button>' : ''}
+    <p class="hint" style="margin-bottom:12px">O atalho reutiliza talhão, sistema e duração, mas registra hoje somente quando você confirmar.</p>
     <div id="irrigList"></div>`;
   body.querySelector("#addI").onclick = () => renderForm("irrigations", null, { onSaved: () => renderIrrigationTab(body) });
+  if (last) body.querySelector("#repeatI").onclick = () => {
+    if (!confirm("Registrar para hoje uma nova irrigação com o mesmo talhão, sistema e duração da última? Confirme somente se a irrigação foi realmente realizada.")) return;
+    const copy={...last,date:today(),notes:"Repetição registrada manualmente a partir da irrigação anterior."};
+    delete copy.id; delete copy.createdAt; delete copy.updatedAt;
+    S.store.create("irrigations",copy);
+    renderIrrigationTab(body);
+  };
   renderEntityList("irrigations", body.querySelector("#irrigList"), { onItemSaved: () => renderIrrigationTab(body) });
 }
 
@@ -3175,7 +3189,7 @@ function renderShell() {
         <div>RAIZ<small>Gestão Agrícola</small></div>
       </div>
       ${NAV_ITEMS.map(i => `<a data-nav="${i.key}">${i.icon} ${i.label}</a>`).join("")}
-      <button class="navbtn" id="logoutBtnSide" style="margin-top:auto;color:#CBD8C0;">🚪 Sair</button>
+      <button class="navbtn" id="logoutBtnSide" style="margin-top:auto;color:#CBD8C0;">🚧 Sair</button>
     </nav>
     <div class="topbar">
       <div style="display:flex;align-items:center;gap:10px;">
@@ -3187,7 +3201,7 @@ function renderShell() {
       </div>
       <div style="display:flex;align-items:center;gap:8px;">
         <div class="dap-pill" id="topDap">${S.currentDAP() !== null ? S.currentDAP() + " DAP" : "—"}</div>
-        <button class="icon-btn" id="logoutBtnTop" title="Sair">🚪</button>
+        <button class="icon-btn" id="logoutBtnTop" title="Sair do RAIZ">🚧</button>
       </div>
     </div>
     <div class="app-shell"><div id="viewRoot"></div></div>
@@ -3273,6 +3287,14 @@ function renderRaizMesa(container) {
         <p id="rm-summary" style="font-size:13px;margin-top:12px"></p>
         <button id="rm-export" class="btn ghost" type="button">⬇ Exportar simulação CSV</button>
       </div>
+<div class="card section"><h2>📚 Aprenda a vender sua produção</h2>
+      <p><strong>1. Organize suas finanças:</strong> separe despesas da atividade rural das retiradas pessoais; registre arrendamento, insumos, mão de obra e transporte por safra.</p>
+      <p><strong>2. Calcule seu custo:</strong> divida os custos totais pela quantidade efetivamente vendável; inclua perdas e gastos de entrega antes de definir o preço.</p>
+      <p><strong>3. Encontre compradores:</strong> liste restaurantes, sacolões, mercados, cooperativas e entrepostos da região. Pergunte quais produtos, volumes e padrões aceitam.</p>
+      <p><strong>4. Apresente a proposta:</strong> informe produto, quantidade, classificação, apresentação, preço, frequência de entrega e condições de pagamento.</p>
+      <p><strong>5. Proteja sua margem:</strong> compare o resultado líquido de vender direto e para comerciantes, considerando frete, taxas, embalagens e prazo para receber.</p>
+      <p style="font-size:12px;color:var(--muted)">Guia introdutório. Regras fiscais e exigências sanitárias variam conforme produto, comprador e município.</p>
+    </div>
       <div class="card section">
         <h2>Para qual canal vender?</h2>
         <p style="font-size:13px">A venda direta pode render mais por unidade, mas exige tempo para atender, entregar e divulgar. Vendas a comerciantes, CEASA, mercados e restaurantes podem movimentar maior volume, com outras condições e custos.</p>
