@@ -2779,6 +2779,29 @@ async function loadRaizContextAssistant(target) {
   add("Registros disponíveis: "+moisture.length+" medições de umidade, "+rain.length+" registros de chuva e "+irrigations.length+" irrigações.");
   if(!moisture.length)add("Antes de recomendar quanto irrigar, precisamos de observações da umidade do solo, tipo de solo, fase da cultura e características do sistema de irrigação.");
   add("O RAIZ ainda não calcula automaticamente a lâmina de irrigação: não use apenas temperatura ou chuva prevista para definir a quantidade de água.");
+
+  const steps=document.createElement("div");
+  steps.style.cssText="margin-top:16px;border-top:1px solid var(--line);padding-top:14px";
+  const heading=document.createElement("h3");heading.textContent="✅ Seus próximos passos";steps.append(heading);
+  const workflow=[];
+  if(!plots.length)workflow.push({title:"Escolha o que deseja plantar",detail:"É possível cadastrar uma ou várias culturas, sem preencher os dados técnicos agora.",route:"culturas"});
+  else {
+    if(!settings.municipality || !settings.state)workflow.push({title:"Informe cidade e estado",detail:"Isso ajuda o RAIZ a encontrar a referência meteorológica da sua região.",route:"configuracoes"});
+    else if(!settings.latitude || !settings.longitude)workflow.push({title:"Encontre as coordenadas da cidade",detail:"Em Propriedade, use Buscar coordenadas da cidade e depois Salvar.",route:"configuracoes"});
+    if(planned.length)workflow.push({title:"Complete um talhão aos poucos",detail:"Nome da área e cultura já bastam para começar; preencha tamanho e data de plantio quando souber.",route:"lavoura"});
+    if(!S.store.all("soilAnalyses").length)workflow.push({title:"Verifique se há análise de solo",detail:"Consulte assistência técnica ou laboratório para interpretar a análise antes de recomendar adubação.",route:"lavoura"});
+    if(!moisture.length)workflow.push({title:"Observe e registre a umidade",detail:"Registros ajudam a entender a necessidade de água. Não use apenas temperatura para decidir irrigação.",route:"clima/umidade"});
+    if(!irrigations.length)workflow.push({title:"Registre a irrigação quando ocorrer",detail:"O registro pode ser repetido a partir do anterior, mas somente depois de confirmar que irrigou.",route:"clima/irrigacao"});
+  }
+  if(!workflow.length)workflow.push({title:"Continue acompanhando",detail:"Revise clima, inspeções e registros da lavoura conforme a necessidade.",route:"painel"});
+  workflow.slice(0,5).forEach((item,index)=>{
+    const row=document.createElement("div");row.style.cssText="padding:10px 0;border-bottom:1px solid var(--line)";
+    const label=document.createElement("strong");label.textContent=(index+1)+". "+item.title;
+    const detail=document.createElement("p");detail.style.cssText="font-size:13px;margin:5px 0";detail.textContent=item.detail;
+    const button=document.createElement("button");button.className="btn ghost";button.type="button";button.textContent="Abrir esta etapa →";button.onclick=()=>navigate(item.route);
+    row.append(label,detail,button);steps.append(row);
+  });
+  target.append(steps);
   const foot=document.createElement("p");foot.className="hint";foot.textContent="Avaliação educativa baseada nos dados informados. Recomendações de irrigação, adubação e defensivos exigem validação agronômica local.";target.append(foot);
 }
 
