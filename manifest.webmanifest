@@ -1,0 +1,25 @@
+{
+  "id": "/",
+  "name": "RAIZ — Gestão Agrícola",
+  "short_name": "Gestão Agrícola",
+  "description": "RAIZ — assistência e gestão da produção agrícola",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#F8F5EB",
+  "theme_color": "#183728",
+  "icons": [
+    {
+      "src": "/icon-raiz-light.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-raiz-dark.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
