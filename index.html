@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%20100%20100%22%3E%0A%3Ccircle%20cx%3D%2250%22%20cy%3D%2250%22%20r%3D%2249%22%20fill%3D%22%23132A1F%22/%3E%0A%3Cpath%20d%3D%22M50%2C52%20C36%2C42%2032%2C22%2050%2C8%20C68%2C22%2064%2C42%2050%2C52%20Z%22%20fill%3D%22%233E6B45%22/%3E%0A%3Cpath%20d%3D%22M50%2C52%20C36%2C42%2032%2C22%2050%2C8%20C68%2C22%2064%2C42%2050%2C52%20Z%22%20fill%3D%22%2379A466%22%20transform%3D%22rotate%2872%2050%2050%29%22/%3E%0A%3Cpath%20d%3D%22M50%2C52%20C36%2C42%2032%2C22%2050%2C8%20C68%2C22%2064%2C42%2050%2C52%20Z%22%20fill%3D%22%233E6B45%22%20transform%3D%22rotate%28144%2050%2050%29%22/%3E%0A%3Cpath%20d%3D%22M50%2C52%20C36%2C42%2032%2C22%2050%2C8%20C68%2C22%2064%2C42%2050%2C52%20Z%22%20fill%3D%22%2379A466%22%20transform%3D%22rotate%28216%2050%2050%29%22/%3E%0A%3Cpath%20d%3D%22M50%2C52%20C36%2C42%2032%2C22%2050%2C8%20C68%2C22%2064%2C42%2050%2C52%20Z%22%20fill%3D%22%233E6B45%22%20transform%3D%22rotate%28288%2050%2050%29%22/%3E%0A%3Ccircle%20cx%3D%2250%22%20cy%3D%2252%22%20r%3D%227%22%20fill%3D%22%23A85A35%22/%3E%0A%3C/svg%3E">
+<link rel="icon" href="logo-raiz.svg"">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script>
@@ -1648,16 +1648,11 @@ function renderEntityList(entityKey, container, { filterFn, sortFn, emptyIcon = 
 // Gerada em SVG (sem dependência de imagem externa), reaproveitável em
 // qualquer tamanho — usada no login, na barra lateral e no favicon.
 function logoSVG(size = 40, { withBg = true } = {}) {
-  const lobe = (i) => {
-    const angle = i * 72;
-    const fill = i % 2 === 0 ? "var(--field)" : "var(--field-light)";
-    return `<path d="M50,52 C36,42 32,22 50,8 C68,22 64,42 50,52 Z" fill="${fill}" transform="rotate(${angle} 50 50)"/>`;
-  };
-  const bg = withBg ? `<circle cx="50" cy="50" r="49" fill="var(--forest-deep)"/>` : "";
-  return `<svg width="${size}" height="${size}" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-    ${bg}
-    ${[0, 1, 2, 3, 4].map(lobe).join("")}
-    <circle cx="50" cy="52" r="7" fill="var(--clay)"/>
+  return `<svg width="${size}" height="${size}" viewBox="0 0 100 100" role="img" aria-label="RAIZ">
+    ${withBg ? '<rect width="100" height="100" rx="24" fill="#173526"/>' : ''}
+    <path d="M20 82V17h29c22 0 32 10 32 27 0 12-7 21-19 25l19 13H58L41 68h-3v14H20Zm18-48v19h11c10 0 14-4 14-10 0-6-5-9-14-9H38Z" fill="${withBg?'#f8f5e9':'#214f37'}"/>
+    <path d="M26 83c14-20 28-29 46-31M34 86c12-13 25-18 39-20M42 89c13-9 25-11 37-11" stroke="#b77949" stroke-width="4" stroke-linecap="round" fill="none"/>
+    <path d="M39 22c9-14 20-16 29-13-5 11-14 18-28 17" fill="#7ca66c"/>
   </svg>`;
 }
 
@@ -1683,8 +1678,8 @@ function renderLogin(onSuccess, startupError = "") {
     <div class="onboard-wrap">
       <div class="onboard-card" style="text-align:center;">
         ${logoSVG(72)}
-        <h1 style="margin-top:12px;">Raiz Mineira</h1>
-        <p class="sub" style="margin-bottom:18px;">Gestão agronômica da safra</p>
+        <h1 style="margin-top:12px;">RAIZ</h1>
+        <p class="sub" style="margin-bottom:18px;">Gestão Agrícola</p>
         <div class="tabs" style="justify-content:center;margin-bottom:16px;">
           <button type="button" class="active" id="tabLogin">Entrar</button>
           <button type="button" id="tabSignup">Criar primeiro acesso</button>
