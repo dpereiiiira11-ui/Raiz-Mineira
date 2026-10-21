@@ -2749,10 +2749,44 @@ function renderReport(id, out) {
 // ============================================================================
 // ASSISTENTE DA SAFRA (guia por fase, biblioteca, comparação cana, regras, investigar, checklist)
 // ============================================================================
+
+async function loadRaizContextAssistant(target) {
+  const settings=S.getSettings();
+  const plots=S.store.all("plots");
+  const todayStr=S_today();
+  const active=plots.filter(p=>p.plantingDate && p.plantingDate<=todayStr);
+  const planned=plots.filter(p=>!p.plantingDate);
+  const crops=[...new Set(plots.map(p=>p.cultivar).filter(Boolean))];
+  const weather=await S.getWeather();
+  if(!target.isConnected)return;
+  target.replaceChildren();
+  const title=document.createElement("h2");title.textContent="🌱 Diagnóstico inicial da lavoura";target.append(title);
+  const list=document.createElement("ul");list.className="subtle-list";target.append(list);
+  function add(message){const li=document.createElement("li");li.textContent=message;list.append(li);}
+  if(!plots.length)add("Primeiro passo: abra Culturas e escolha o que pretende plantar. Você pode selecionar várias culturas.");
+  else add("Culturas cadastradas: "+(crops.join(", ")||"não informadas")+". Talhões em planejamento: "+planned.length+"; com data de plantio: "+active.length+".");
+  if(planned.length)add("Informe a data do plantio quando ocorrer para que o sistema calcule quantos dias se passaram e acompanhe os registros.");
+  if(!settings.latitude || !settings.longitude)add("Para ter previsão do tempo, abra Configurações → Propriedade, informe município e estado e toque em Buscar coordenadas da cidade.");
+  else if(weather && !weather.error){
+    const cur=weather.current||{};
+    add("Condições meteorológicas de referência: temperatura "+(cur.temperature_2m??"não disponível")+" °C; precipitação atual "+(cur.precipitation??"não disponível")+" mm.");
+    const next=(weather.forecast||[]).slice(0,3);
+    if(next.length)add("Previsão de chuva nos próximos 3 dias: "+next.map(d=>String(d.precipMm??"?")+" mm").join(" / ")+". Consulte a aba Clima para mais detalhes.");
+  } else add("Ainda não foi possível obter previsão atualizada. Verifique as coordenadas e a conexão.");
+  const moisture=S.store.all("soilMoisture");
+  const rain=S.store.all("rainRecords");
+  const irrigations=S.store.all("irrigations");
+  add("Registros disponíveis: "+moisture.length+" medições de umidade, "+rain.length+" registros de chuva e "+irrigations.length+" irrigações.");
+  if(!moisture.length)add("Antes de recomendar quanto irrigar, precisamos de observações da umidade do solo, tipo de solo, fase da cultura e características do sistema de irrigação.");
+  add("O RAIZ ainda não calcula automaticamente a lâmina de irrigação: não use apenas temperatura ou chuva prevista para definir a quantidade de água.");
+  const foot=document.createElement("p");foot.className="hint";foot.textContent="Avaliação educativa baseada nos dados informados. Recomendações de irrigação, adubação e defensivos exigem validação agronômica local.";target.append(foot);
+}
+
 function renderAssistente(container, sub) {
   container.innerHTML = `
     <div class="view">
-      <div class="view-header"><div class="eyebrow">Assistente</div><h1>Guia da cultura</h1><p class="sub">Base técnica inicial de mandioca — funciona sem IA externa, a partir dos seus próprios registros.</p></div>
+      <div class="view-header"><div class="eyebrow">Assistente RAIZ</div><h1>Seu acompanhamento agrícola</h1><p class="sub">Orientações iniciais com dados da sua lavoura e previsão local. O guia técnico detalhado abaixo ainda é específico de mandioca.</p></div>
+      <div class="card" id="contextAssistant" style="margin-bottom:14px">Analisando sua propriedade...</div>
       <div class="tabs" id="asTabs">
         <button data-t="fase" class="active">Fase atual</button>
         <button data-t="linha">Linha do tempo</button>
@@ -2765,6 +2799,8 @@ function renderAssistente(container, sub) {
     </div>`;
   const tabs = container.querySelector("#asTabs");
   const body = container.querySelector("#asBody");
+  loadRaizContextAssistant(container.querySelector("#contextAssistant"));
+
   function show(tab) {
     tabs.querySelectorAll("button").forEach(b => b.classList.toggle("active", b.dataset.t === tab));
     if (tab === "fase") renderPhaseTab(body);
@@ -2954,6 +2990,7 @@ function renderPropertyForm(body) {
     <div class="field"><label>Município</label><input id="municipality" value="${s.municipality || ""}"/></div>
     <div class="field"><label>Estado</label><input id="state" value="${s.state || ""}"/></div>
     <div class="field"><label>Região agrícola</label><input id="region" value="${s.region || ""}"/></div>
+    <div class="card" style="background:var(--field-pale);margin-bottom:12px"><strong>📍 Não sabe as coordenadas?</strong><p style="font-size:13px">Informe município e estado acima e clique em Buscar. Usaremos o centro aproximado da cidade para previsão do tempo; não é a localização exata da fazenda.</p><button type="button" class="btn ghost block" id="findMunicipality">Buscar coordenadas da cidade</button><p id="locationFeedback" role="status" style="font-size:12px;margin-top:8px"></p></div>
     <div class="grid cols-2">
       <div class="field"><label>Latitude</label><input id="latitude" type="number" step="0.0001" value="${s.latitude ?? ""}"/></div>
       <div class="field"><label>Longitude</label><input id="longitude" type="number" step="0.0001" value="${s.longitude ?? ""}"/></div>
@@ -2961,6 +2998,29 @@ function renderPropertyForm(body) {
     <div class="field"><label>Altitude (m), se disponível</label><input id="altitude" type="number" value="${s.altitude ?? ""}"/></div>
     <div class="field"><label>Área total cultivada (ha)</label><input id="totalAreaHa" type="number" step="0.01" value="${s.totalAreaHa ?? ""}"/></div>
     <button class="btn primary block" id="saveProp">Salvar</button>`;
+  body.querySelector("#findMunicipality").onclick = async () => {
+    const city=body.querySelector("#municipality").value.trim();
+    const state=body.querySelector("#state").value.trim();
+    const msg=body.querySelector("#locationFeedback");
+    if(!city || !state){msg.textContent="Preencha município e estado (por exemplo: Uberaba e MG).";return;}
+    const btn=body.querySelector("#findMunicipality");
+    btn.disabled=true;msg.textContent="Buscando a localização aproximada...";
+    try {
+      const url="https://geocoding-api.open-meteo.com/v1/search?name="+encodeURIComponent(city)+"&count=10&language=pt&format=json&countryCode=BR";
+      const res=await fetch(url);
+      if(!res.ok) throw new Error("Falha no serviço de localização");
+      const json=await res.json();
+      const options=(json.results||[]).filter(x=>x.country_code==="BR");
+      const normalize=x=>String(x||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().trim();
+      const states={MG:"Minas Gerais",SP:"São Paulo",GO:"Goiás",PR:"Paraná",RS:"Rio Grande do Sul",SC:"Santa Catarina",BA:"Bahia",MT:"Mato Grosso",MS:"Mato Grosso do Sul",RJ:"Rio de Janeiro",ES:"Espírito Santo",PA:"Pará",MA:"Maranhão",TO:"Tocantins",PI:"Piauí",CE:"Ceará",PB:"Paraíba",PE:"Pernambuco",AL:"Alagoas",SE:"Sergipe",RN:"Rio Grande do Norte",RO:"Rondônia",RR:"Roraima",AC:"Acre",AM:"Amazonas",AP:"Amapá",DF:"Distrito Federal"};
+      const expected=states[state.toUpperCase()]||state;
+      const match=options.find(x=>normalize(x.name)===normalize(city)&&normalize(x.admin1)===normalize(expected));
+      if(!match){msg.textContent="Não encontrei uma correspondência exata de cidade e estado. Confira a grafia; não preenchi coordenadas para evitar previsão errada.";return;}
+      body.querySelector("#latitude").value=match.latitude;
+      body.querySelector("#longitude").value=match.longitude;
+      msg.textContent="Localização aproximada encontrada: "+match.name+", "+match.admin1+". Clique em Salvar para usar esta referência climática.";
+    } catch(e){msg.textContent="Não foi possível consultar a localização. Tente novamente com internet.";} finally{btn.disabled=false;}
+  };
   body.querySelector("#saveProp").onclick = () => {
     S.updateSettings({
       propertyName: body.querySelector("#propertyName").value,
