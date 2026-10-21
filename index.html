@@ -2815,6 +2815,11 @@ function renderAssistente(container, sub) {
 }
 
 function renderPhaseTab(body) {
+  const crops=S.store.all("plots").map(p=>String(p.cultivar||"").toLowerCase()).filter(Boolean);
+  if(crops.length && crops.some(c=>!c.includes("mandioca"))) {
+    body.innerHTML='<div class="card"><h2>Guia por cultura em preparação</h2><p>O calendário de fases disponível nesta tela foi construído para mandioca. Para outras culturas, consulte o diagnóstico inicial acima e registre a data do plantio. Não aplicaremos automaticamente fases de mandioca a milho, soja ou outras lavouras.</p></div>';
+    return;
+  }
   const dap = S.currentDAP();
   const phase = S.phaseForDAP(dap);
   if (!phase) { body.innerHTML = `<div class="empty-state"><div class="ic">🌱</div><p>Cadastre a data de plantio de um talhão para ativar o guia por fase.</p></div>`; return; }
