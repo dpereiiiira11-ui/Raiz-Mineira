@@ -3339,7 +3339,7 @@ function openQuickAdd() {
 
 
 function renderRaizMesa(container) {
-  container.innerHTML = \`
+  container.innerHTML = `
     <div class="view">
       <div class="view-header">
         <div class="eyebrow">Comercialização agrícola</div>
@@ -3372,7 +3372,7 @@ function renderRaizMesa(container) {
         <p style="font-size:13px">A venda direta pode render mais por unidade, mas exige tempo para atender, entregar e divulgar. Vendas a comerciantes, CEASA, mercados e restaurantes podem movimentar maior volume, com outras condições e custos.</p>
         <p style="font-size:13px"><strong>Antes de negociar:</strong> confirme padrão de qualidade, disponibilidade, embalagem, documentação fiscal, prazo de pagamento e frete. Pesquise cotações atualizadas na sua região.</p>
       </div>
-    </div>\`;
+    </div>`;
   const $ = id => container.querySelector("#" + id);
   const keys = ["cost", "pack", "freight", "other", "loss", "direct", "wholesale"];
   let output = null;
@@ -3401,8 +3401,8 @@ function renderRaizMesa(container) {
   container.querySelectorAll("input,select").forEach(el => el.addEventListener("input",recalc));
   $("rm-export").addEventListener("click", () => {
     if(!output) return;
-    const csv = "Tipo;Preço por "+output.unit+"\\nCusto;"+output.cost.toFixed(2)+"\\nDireta;"+output.direct.toFixed(2)+"\\nPara revenda;"+output.wholesale.toFixed(2);
-    const url = URL.createObjectURL(new Blob(["\\uFEFF"+csv],{type:"text/csv;charset=utf-8"}));
+    const csv = "Tipo;Preço por "+output.unit+"\nCusto;"+output.cost.toFixed(2)+"\nDireta;"+output.direct.toFixed(2)+"\nPara revenda;"+output.wholesale.toFixed(2);
+    const url = URL.createObjectURL(new Blob(["\uFEFF"+csv],{type:"text/csv;charset=utf-8"}));
     const a = document.createElement("a"); a.href=url; a.download="raiz-precos.csv"; a.click(); URL.revokeObjectURL(url);
   });
   recalc();
